@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, Max, Min } from "class-validator";
+import { IsInt, IsNotEmpty, IsNumber, Max, Min } from "class-validator";
 import { UserType } from "../enum/user-type.enum";
 
 export class CreateUserDto {
@@ -9,5 +9,6 @@ export class CreateUserDto {
     @IsNumber()
     @Max(Object.keys(UserType).length - 4)
     @Min(0)
+    @IsInt()
     type: UserType;
 }
