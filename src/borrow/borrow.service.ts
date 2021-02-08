@@ -51,15 +51,14 @@ export class BorrowService {
   }
 
   canBorrow(user: UserDocument): boolean {
-    const borrows = user.borrows;
+    let hasTooMuchActiveBorrows = this.hasTooMuchActiveBorrows(user);
+    
 
-    const borrowsInProgress = borrows.filter(borrow => !borrow.returned);
-
-    if (borrowsInProgress.length >= this.BORROWS_LIMIT) {
+    if (hasTooMuchActiveBorrows) {
       throw new BadRequestException('Borrows limit exceeded');
     }
 
-    const hasALockingBorrow = this.isABorrowLocking(borrows);
+    const hasALockingBorrow = this.isABorrowLocking(user);
 
     if (hasALockingBorrow) {
       throw new BadRequestException('One of your books has been borrowed too long time ago');
@@ -68,7 +67,18 @@ export class BorrowService {
     return true;
   }
 
-  isABorrowLocking(borrows: Borrow[]): boolean {
+  hasTooMuchActiveBorrows(user: UserDocument) {
+    const borrows = user.borrows;
+
+    const borrowsInProgress = borrows.filter(borrow => !borrow.returned);
+
+    if (borrowsInProgress.length >= this.BORROWS_LIMIT) return true;
+
+    return false;
+  }
+
+  isABorrowLocking(user: UserDocument): boolean {
+    const borrows = user.borrows;
 
     for (const borrow of borrows) {
       const isLocking = (borrow.date < this.LOCKING_BORROW_DATE) && !borrow.returned;
