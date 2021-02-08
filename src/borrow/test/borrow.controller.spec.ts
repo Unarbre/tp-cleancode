@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BorrowController } from './borrow.controller';
-import { BorrowService } from './borrow.service';
+import { BorrowController } from '../borrow.controller';
+import { BorrowService } from '../borrow.service';
 
 describe('BorrowController', () => {
   let controller: BorrowController;

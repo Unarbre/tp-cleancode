@@ -20,7 +20,7 @@ export class UserService {
     return await this.userModel.create(userEntity);
   }
 
-  async findById(id: string): Promise<User> {
+  async findById(id: string) {
     if (!MongoUtil.isValidObjectId(id)) return null;
     return await this.userModel.findById(id);
   }
