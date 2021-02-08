@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Put, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, BadRequestException } from '@nestjs/common';
+import { MongoUtil } from 'src/core/utils/mongo.util';
 import { BookService } from './book.service';
 import { CreateBookDto } from './dto/create-book.dto';
 
@@ -6,14 +7,24 @@ import { CreateBookDto } from './dto/create-book.dto';
 export class BookController {
   constructor(private readonly bookService: BookService) { }
 
-  @Post()
+  @Post('')
   create(@Body() createBookDto: CreateBookDto) {
     return this.bookService.create(createBookDto);
   }
 
   @Post('/borrow/:bookId/:borrowerId')
   borrow(@Param('bookId') bookId: string, @Param('borrowerId') borrowerId: string) {
-    console.log(bookId);
-    console.log(borrowerId);
+    const areIdsValid = MongoUtil.isValidObjectId(bookId) && MongoUtil.isValidObjectId(borrowerId);
+    
+    if (!areIdsValid) {
+      throw new BadRequestException('Passed ids are not valid');
+    }
+
+    return this.bookService.borrowBook(bookId, borrowerId);
+  }
+
+  @Get('')
+  seeAllbooks() {
+    return this.bookService.findAll();
   }
 }
