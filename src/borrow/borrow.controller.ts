@@ -15,7 +15,7 @@ export class BorrowController {
   @Get(':id')
   findAllById(@Param('id') id: string) {
     if(!MongoUtil.isValidObjectId(id)) throw new BadRequestException('Id is not valid');
-    return this.borrowService.findAllById(id);
+    return this.borrowService.findAllByUserId(id);
   }
 
   @Put(':id')

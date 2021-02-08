@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
+import { BookService } from 'src/book/book.service';
+import { BookDocument } from 'src/book/mongo/book.mongo';
 import { TimeUtil } from 'src/core/utils/time.util';
 import { UserDocument } from 'src/user/mongo/user.mongo';
 import { UserService } from 'src/user/user.service';
-import { BorrowDtoAdapter } from './adapter/borrow-dto.adapter';
 import { CreateBorrowDto } from './dto/create-borrow.dto';
 import { Borrow, BorrowDocument } from './mongo/borrow.mongo';
 
@@ -16,8 +17,8 @@ export class BorrowService {
 
   constructor(
     @InjectModel(Borrow.name) private borrowModel: Model<BorrowDocument>,
-    private readonly borrowDtoAdapter: BorrowDtoAdapter,
     private readonly userService: UserService,
+    private readonly bookService: BookService,
   ) { }
 
   async borrow(createBorrowDto: CreateBorrowDto) {
@@ -31,7 +32,20 @@ export class BorrowService {
       return;
     }
 
-    const borrowEntity = this.borrowDtoAdapter.adapt(createBorrowDto);
+    const book = await this.bookService.findById(createBorrowDto.bookId);
+    if (!book) throw new NotFoundException('Book does not exist');
+
+    const isFreeToBorrow = await this.isFreeToBorrow(book);
+
+    if (!isFreeToBorrow) {
+      return;
+    }
+
+    return this.processBorrow(user, book);
+  }
+
+  async processBorrow(user: UserDocument, book: BookDocument) {
+    const borrowEntity = { book, date: new Date() };
 
     const borrow = await this.borrowModel.create(borrowEntity);
 
@@ -40,19 +54,15 @@ export class BorrowService {
     return borrow;
   }
 
-  async findAllById(id: string) {
+  async findAllByUserId(id: string) {
     const user = await this.userService.findById(id);
     if (!user) throw new NotFoundException('User does not exist');
     return user.borrows;
   }
 
-  returnBook(id: string) {
-    return `This action updates a #${id} borrow`;
-  }
-
   canBorrow(user: UserDocument): boolean {
     let hasTooMuchActiveBorrows = this.hasTooMuchActiveBorrows(user);
-    
+
 
     if (hasTooMuchActiveBorrows) {
       throw new BadRequestException('Borrows limit exceeded');
@@ -86,5 +96,22 @@ export class BorrowService {
     }
 
     return false;
+  }
+
+  async isFreeToBorrow(book: BookDocument): Promise<boolean> {
+    const booksBorrows = await this.findAllByBookId(book._id);
+    const unreturnedBooksBorrows = booksBorrows.filter(borrow => !borrow.returned);
+    console.log(unreturnedBooksBorrows);
+
+    if (unreturnedBooksBorrows.length > 0) throw new BadRequestException('Book is already borrowed');
+    return true;
+  }
+
+  async findAllByBookId(bookId: ObjectId) {
+    return await this.borrowModel.find({ book: bookId });
+  }
+
+  returnBook(id: string) {
+    return `This action updates a #${id} borrow`;
   }
 }

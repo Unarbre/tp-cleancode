@@ -1,4 +1,6 @@
+import { Book } from "src/book/entities/book.entity";
+
 export class Borrow {
-    bookId: string;
+    Book: Book;
     date: Date;
 }

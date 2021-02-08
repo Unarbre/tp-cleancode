@@ -12,17 +12,6 @@ export class BookController {
     return this.bookService.create(createBookDto);
   }
 
-  @Post('/borrow/:bookId/:borrowerId')
-  borrow(@Param('bookId') bookId: string, @Param('borrowerId') borrowerId: string) {
-    const areIdsValid = MongoUtil.isValidObjectId(bookId) && MongoUtil.isValidObjectId(borrowerId);
-    
-    if (!areIdsValid) {
-      throw new BadRequestException('Passed ids are not valid');
-    }
-
-    return this.bookService.borrowBook(bookId, borrowerId);
-  }
-
   @Get('')
   seeAllbooks() {
     return this.bookService.findAll();

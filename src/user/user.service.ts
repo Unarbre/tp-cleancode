@@ -44,4 +44,8 @@ export class UserService {
 
     return user;
   }
+
+  async findAll() {
+    return this.userModel.find();
+  }
 }
