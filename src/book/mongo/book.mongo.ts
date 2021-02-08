@@ -10,7 +10,7 @@ export class Book {
     title: string;
 
     @Prop({ require: true })
-    authorName: number;
+    authorName: string;
 }
 
 export const BookSchema = SchemaFactory.createForClass(Book);
