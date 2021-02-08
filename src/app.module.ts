@@ -8,6 +8,7 @@ import { User } from './user/entities/user.entity';
 import { UserSchema } from './user/mongo/user.mongo';
 import { UserModule } from './user/user.module';
 import { UserService } from './user/user.service';
+import { BorrowModule } from './borrow/borrow.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UserService } from './user/user.service';
     BookModule,
     UserModule,
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    BorrowModule,
   ],
   controllers: [AppController],
   providers: [UserService, UserDtoAdapter],

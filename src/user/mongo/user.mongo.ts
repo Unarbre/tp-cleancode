@@ -3,7 +3,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { UserType } from '../enum/user-type.enum';
 import * as mongoose from 'mongoose';
-import { Borrow } from 'src/book/mongo/borrow.mongo';
+import { Borrow } from 'src/borrow/mongo/borrow.mongo';
 
 export type UserDocument = User & Document;
 

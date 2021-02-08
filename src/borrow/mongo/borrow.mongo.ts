@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import * as mongoose from 'mongoose';
-import { Book } from './book.mongo';
+import { Book } from '../../book/mongo/book.mongo';
 
 export type BorrowDocument = Borrow & Document;
 
