@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Put, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Param, Delete, BadRequestException } from '@nestjs/common';
+import { MongoUtil } from 'src/core/utils/mongo.util';
 import { BorrowService } from './borrow.service';
 import { CreateBorrowDto } from './dto/create-borrow.dto';
 
@@ -7,12 +8,13 @@ export class BorrowController {
   constructor(private readonly borrowService: BorrowService) {}
 
   @Post()
-  create(@Body() createBorrowDto: CreateBorrowDto) {
-    return this.borrowService.create(createBorrowDto);
+  borrow(@Body() createBorrowDto: CreateBorrowDto) {
+    return this.borrowService.borrow(createBorrowDto);
   }
 
   @Get(':id')
   findAllById(@Param('id') id: string) {
+    if(!MongoUtil.isValidObjectId(id)) throw new BadRequestException('Id is not valid');
     return this.borrowService.findAllById(id);
   }
 
