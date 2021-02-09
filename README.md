@@ -21,3 +21,5 @@ Désolé ~~
 La création de livre et de réservations est réservée au Librarian (utilisateur de type = 0);
 
 Il suffit de passer l'id de l'utilisateur en token Bearer pour être authentifié en tant que tel.
+
+Seul la route de création d'utilisateur n'a aucune contrainte de middleware. Pour les autres, il faut au pire être un utilisateur (compte de type 1 ou 2), au mieux être un admin (compte de type 0).
