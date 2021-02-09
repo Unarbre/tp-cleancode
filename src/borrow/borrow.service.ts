@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, MethodNotAllowedException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { BookService } from 'src/book/book.service';
 import { BookDocument } from 'src/book/mongo/book.mongo';
 import { TimeUtil } from 'src/core/utils/time.util';
+import { UserType } from 'src/user/enum/user-type.enum';
 import { UserDocument } from 'src/user/mongo/user.mongo';
 import { UserService } from 'src/user/user.service';
 import { CreateBorrowDto } from './dto/create-borrow.dto';
@@ -56,8 +57,9 @@ export class BorrowService {
   }
 
   canBorrow(user: UserDocument): boolean {
-    let hasTooMuchActiveBorrows = this.hasTooMuchActiveBorrows(user);
+    if(user.type === UserType.GUEST) throw new ForbiddenException('Guests can not borrow');
 
+    let hasTooMuchActiveBorrows = this.hasTooMuchActiveBorrows(user);
 
     if (hasTooMuchActiveBorrows) {
       throw new BadRequestException('Borrows limit exceeded');
@@ -113,13 +115,11 @@ export class BorrowService {
 
   async returnBook(returnBorrowedDto: ReturnBorrowDto) {
 
-
     const user = await this.userService.findById(returnBorrowedDto.borrower);
 
     if (!user) throw new NotFoundException('User does not exist');
 
     const book = await this.bookService.findById(returnBorrowedDto.bookId);
-
 
     if (!book) throw new NotFoundException('Book does not exist');
 
@@ -164,7 +164,7 @@ export class BorrowService {
   }
 
   async processReturnBook(user: UserDocument, book: BookDocument) {
-    
+
     const unreturnedBorrow = await this.getUnreturnedBorrow(book);
     unreturnedBorrow.returned = true;
     unreturnedBorrow.save();
