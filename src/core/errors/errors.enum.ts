@@ -18,5 +18,6 @@ export enum ErrorsEnum {
 
 
     DENIED_ACCESS_ERROR_MESSAGE = "Access denied. Please provide a user token.",
+    ADMIN_DENIED_ACCESS = "Access denied. Please provide a librarian user token.",
 
 }
