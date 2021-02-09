@@ -7,6 +7,7 @@ import { TimeUtil } from 'src/core/utils/time.util';
 import { UserDocument } from 'src/user/mongo/user.mongo';
 import { UserService } from 'src/user/user.service';
 import { CreateBorrowDto } from './dto/create-borrow.dto';
+import { ReturnBorrowDto } from './dto/return-borrow.dto';
 import { Borrow, BorrowDocument } from './mongo/borrow.mongo';
 
 @Injectable()
@@ -54,12 +55,6 @@ export class BorrowService {
     return borrow;
   }
 
-  async findAllByUserId(id: string) {
-    const user = await this.userService.findById(id);
-    if (!user) throw new NotFoundException('User does not exist');
-    return user.borrows;
-  }
-
   canBorrow(user: UserDocument): boolean {
     let hasTooMuchActiveBorrows = this.hasTooMuchActiveBorrows(user);
 
@@ -101,7 +96,6 @@ export class BorrowService {
   async isFreeToBorrow(book: BookDocument): Promise<boolean> {
     const booksBorrows = await this.findAllByBookId(book._id);
     const unreturnedBooksBorrows = booksBorrows.filter(borrow => !borrow.returned);
-    console.log(unreturnedBooksBorrows);
 
     if (unreturnedBooksBorrows.length > 0) throw new BadRequestException('Book is already borrowed');
     return true;
@@ -111,7 +105,70 @@ export class BorrowService {
     return await this.borrowModel.find({ book: bookId });
   }
 
-  returnBook(id: string) {
-    return `This action updates a #${id} borrow`;
+  async findAllByUserId(id: string) {
+    const user = await this.userService.findById(id);
+    if (!user) throw new NotFoundException('User does not exist');
+    return user.borrows;
+  }
+
+  async returnBook(returnBorrowedDto: ReturnBorrowDto) {
+
+
+    const user = await this.userService.findById(returnBorrowedDto.borrower);
+
+    if (!user) throw new NotFoundException('User does not exist');
+
+    const book = await this.bookService.findById(returnBorrowedDto.bookId);
+
+
+    if (!book) throw new NotFoundException('Book does not exist');
+
+    const isBoworred = this.isBorrowed(book);
+
+    if (!isBoworred) throw new BadRequestException('Book is not borrowed');
+
+    const hasBook = await this.hasBook(user, book);
+
+    if (!hasBook) throw new BadRequestException('User does not have book');
+
+    return this.processReturnBook(user, book);
+  }
+
+  async isBorrowed(book: BookDocument) {
+
+    const bookBorrows = await this.findAllByBookId(book._id)
+    return bookBorrows.filter(borrow => !borrow.returned).length > 0;
+  }
+
+  async hasBook(user: UserDocument, book: BookDocument) {
+    const bookBorrow = await this.findAllByBookId(book._id);
+    const bookUnreturnedBorrows = bookBorrow.filter(borrow => !borrow.returned);
+    const userBorrows = user.borrows;
+
+    if (!userBorrows) throw new BadRequestException('User does not have any borrows');
+
+    for (const bookBorrow of bookUnreturnedBorrows) {
+      for (const userBorrow of userBorrows) {
+        if (bookBorrow.id == userBorrow) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  async getUnreturnedBorrow(book: BookDocument) {
+    const borrows = await this.borrowModel.find({ book: book });
+    return borrows.filter(borrow => !borrow.returned)[0];
+  }
+
+  async processReturnBook(user: UserDocument, book: BookDocument) {
+    
+    const unreturnedBorrow = await this.getUnreturnedBorrow(book);
+    unreturnedBorrow.returned = true;
+    unreturnedBorrow.save();
+
+    return unreturnedBorrow;
   }
 }

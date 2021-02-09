@@ -2,10 +2,11 @@ import { Controller, Get, Post, Body, Put, Param, Delete, BadRequestException } 
 import { MongoUtil } from 'src/core/utils/mongo.util';
 import { BorrowService } from './borrow.service';
 import { CreateBorrowDto } from './dto/create-borrow.dto';
+import { ReturnBorrowDto } from './dto/return-borrow.dto';
 
 @Controller('borrow')
 export class BorrowController {
-  constructor(private readonly borrowService: BorrowService) {}
+  constructor(private readonly borrowService: BorrowService) { }
 
   @Post()
   borrow(@Body() createBorrowDto: CreateBorrowDto) {
@@ -14,12 +15,12 @@ export class BorrowController {
 
   @Get(':id')
   findAllById(@Param('id') id: string) {
-    if(!MongoUtil.isValidObjectId(id)) throw new BadRequestException('Id is not valid');
+    if (!MongoUtil.isValidObjectId(id)) throw new BadRequestException('Id is not valid');
     return this.borrowService.findAllByUserId(id);
   }
 
-  @Put(':id')
-  returnBook(@Param('id') id: string) {
-    return this.borrowService.returnBook(id);
+  @Put('/return')
+  returnBook(@Body() returnBorrowDto: ReturnBorrowDto) {
+    return this.borrowService.returnBook(returnBorrowDto);
   }
 }
