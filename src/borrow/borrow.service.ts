@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { BookService } from 'src/book/book.service';
 import { BookDocument } from 'src/book/mongo/book.mongo';
+import { ErrorsEnum } from 'src/core/errors/errors.enum';
 import { ArrayUtil } from 'src/core/utils/array.util';
 import { TimeUtil } from 'src/core/utils/time.util';
 import { UserType } from 'src/user/enum/user-type.enum';
@@ -27,7 +28,7 @@ export class BorrowService {
   async borrow(createBorrowDto: CreateBorrowDto) {
     const user = await this.userService.findById(createBorrowDto.borrower);
 
-    if (!user) throw new NotFoundException('User does not exist');
+    if (!user) throw new NotFoundException(ErrorsEnum.USER_DOES_NOT_EXIST);
 
     const canBorrow = this.canBorrow(user);
 
@@ -36,7 +37,7 @@ export class BorrowService {
     }
 
     const book = await this.bookService.findById(createBorrowDto.bookId);
-    if (!book) throw new NotFoundException('Book does not exist');
+    if (!book) throw new NotFoundException(ErrorsEnum.BOOK_DOES_NOT_EXIST);
 
     const isFreeToBorrow = await this.isFreeToBorrow(book);
 
@@ -58,18 +59,18 @@ export class BorrowService {
   }
 
   canBorrow(user: UserDocument): boolean {
-    if(user.type === UserType.GUEST) throw new ForbiddenException('Guests can not borrow');
+    if(user.type === UserType.GUEST) throw new ForbiddenException(ErrorsEnum.GUEST_ARE_NOT_ALLOWED_TO_BORROW);
 
     let hasTooMuchActiveBorrows = this.hasTooMuchActiveBorrows(user);
 
     if (hasTooMuchActiveBorrows) {
-      throw new BadRequestException('Borrows limit exceeded');
+      throw new BadRequestException(ErrorsEnum.BORROW_LIMIT_EXCEED);
     }
 
     const hasALockingBorrow = this.isABorrowLocking(user);
 
     if (hasALockingBorrow) {
-      throw new BadRequestException('One of your books has been borrowed too long time ago');
+      throw new BadRequestException(ErrorsEnum.BORROW_TIME_EXCEED);
     }
 
     return true;
@@ -100,7 +101,7 @@ export class BorrowService {
     const booksBorrows = await this.findAllByBookId(book._id);
     const unreturnedBooksBorrows = booksBorrows.filter(borrow => !borrow.returned);
 
-    if (unreturnedBooksBorrows.length > 0) throw new BadRequestException('Book is already borrowed');
+    if (unreturnedBooksBorrows.length > 0) throw new BadRequestException(ErrorsEnum.ALREADY_BORROWED);
     return true;
   }
 
@@ -110,7 +111,7 @@ export class BorrowService {
 
   async findAllByUserId(id: string) {
     const user = await this.userService.findById(id);
-    if (!user) throw new NotFoundException('User does not exist');
+    if (!user) throw new NotFoundException(ErrorsEnum.USER_DOES_NOT_EXIST);
     return user.borrows;
   }
 
@@ -118,19 +119,19 @@ export class BorrowService {
 
     const user = await this.userService.findById(returnBorrowedDto.borrower);
 
-    if (!user) throw new NotFoundException('User does not exist');
+    if (!user) throw new NotFoundException(ErrorsEnum.USER_DOES_NOT_EXIST);
 
     const book = await this.bookService.findById(returnBorrowedDto.bookId);
 
-    if (!book) throw new NotFoundException('Book does not exist');
+    if (!book) throw new NotFoundException(ErrorsEnum.BOOK_DOES_NOT_EXIST);
 
     const isBoworred = this.isBorrowed(book);
 
-    if (!isBoworred) throw new BadRequestException('Book is not borrowed');
+    if (!isBoworred) throw new BadRequestException(ErrorsEnum.BOOK_NOT_BORROWED);
 
     const hasBook = await this.hasBook(user, book);
 
-    if (!hasBook) throw new BadRequestException('User does not have book');
+    if (!hasBook) throw new BadRequestException(ErrorsEnum.USER_IS_NOT_BORROWER);
 
     return this.processReturnBook(user, book);
   }
@@ -145,8 +146,6 @@ export class BorrowService {
     const bookBorrow = await this.findAllByBookId(book._id);
     const bookUnreturnedBorrows = bookBorrow.filter(borrow => !borrow.returned);
     const userBorrows = user.borrows;
-
-    if (!userBorrows) throw new BadRequestException('User does not have any borrows');
 
     return ArrayUtil.hasTwoArrayAnyMatchingValues<string>(bookUnreturnedBorrows.map(borrow => borrow.id), userBorrows as any[]);
   }

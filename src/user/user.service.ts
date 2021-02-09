@@ -2,6 +2,7 @@ import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nes
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { BorrowDocument } from 'src/borrow/mongo/borrow.mongo';
+import { ErrorsEnum } from 'src/core/errors/errors.enum';
 import { MongoUtil } from 'src/core/utils/mongo.util';
 import { UserDtoAdapter } from './adapter/user-dto.adapter';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -22,12 +23,12 @@ export class UserService {
   }
 
   async findById(id: string) {
-    if (!MongoUtil.isValidObjectId(id)) throw new BadRequestException('User id is not valid');
+    if (!MongoUtil.isValidObjectId(id)) throw new BadRequestException(ErrorsEnum.INVALID_ID);
     return await this.userModel.findById(id);
   }
 
   async getType(id: string): Promise<UserType> {
-    if (!MongoUtil.isValidObjectId(id)) throw new BadRequestException('User id is not valid');
+    if (!MongoUtil.isValidObjectId(id)) throw new BadRequestException(ErrorsEnum.INVALID_ID);
 
     const user = await this.findById(id);
 
