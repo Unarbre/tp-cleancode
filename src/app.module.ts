@@ -9,6 +9,7 @@ import { UserSchema } from './user/mongo/user.mongo';
 import { UserModule } from './user/user.module';
 import { UserService } from './user/user.service';
 import { BorrowModule } from './borrow/borrow.module';
+import { LoginMiddleware } from './core/middlewares/login.middleware';
 
 @Module({
   imports: [
@@ -28,6 +29,9 @@ export class AppModule {
     consumer
       .apply(AdminMiddleware)
       .exclude({ path: 'book', method: RequestMethod.GET },)
-      .forRoutes('book')
+      .forRoutes('book', 'borrow')
+      .apply(LoginMiddleware)
+      .forRoutes({ path: 'book', method: RequestMethod.GET })
+
   }
 }
