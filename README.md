@@ -14,3 +14,10 @@ Du coup, pas tester, my bad.
 
 Désolé ~~
 
+## Pour gagner du temps sur l'app ##
+
+`J'ai mis dans le projet un environnement insomnia avec les requête CRUD dedans.`
+
+La création de livre et de réservations est réservée au Librarian (utilisateur de type = 0);
+
+Il suffit de passer l'id de l'utilisateur en token Bearer pour être authentifié en tant que tel.
