@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { BookService } from 'src/book/book.service';
 import { BookDocument } from 'src/book/mongo/book.mongo';
+import { ArrayUtil } from 'src/core/utils/array.util';
 import { TimeUtil } from 'src/core/utils/time.util';
 import { UserType } from 'src/user/enum/user-type.enum';
 import { UserDocument } from 'src/user/mongo/user.mongo';
@@ -147,15 +148,7 @@ export class BorrowService {
 
     if (!userBorrows) throw new BadRequestException('User does not have any borrows');
 
-    for (const bookBorrow of bookUnreturnedBorrows) {
-      for (const userBorrow of userBorrows) {
-        if (bookBorrow.id == userBorrow) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    return ArrayUtil.hasTwoArrayAnyMatchingValues<string>(bookUnreturnedBorrows.map(borrow => borrow.id), userBorrows as any[]);
   }
 
   async getUnreturnedBorrow(book: BookDocument) {
